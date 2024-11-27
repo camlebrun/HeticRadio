@@ -4,60 +4,88 @@ import matplotlib.pyplot as plt
 from audio_processor import AudioProcessor
 import config
 
-# Initialisation de l'AudioProcessor
+# Initialize AudioProcessor with the appropriate device
 processor = AudioProcessor(device=config.DEVICE)
 
-st.set_page_config(page_title="Audio Noise Reduction", layout="wide")
-st.title("🎤 Voice Isolation and Noise Reduction")
+# Configure the Streamlit page layout and title
+st.set_page_config(page_title="Analyse Audio - Hetic Radio", layout="wide")
+st.title("🎵 Analyse Audio - Fait par HeticSolutions pour Hetic Radio")
 
-# Téléchargement du fichier audio
-uploaded_file = st.file_uploader("1️⃣ Upload an audio file (MP3 or WAV)", type=["mp3", "wav"])
+# Step 1: File upload
+# Allow users to upload an MP3 or WAV file for analysis and cleaning
+st.header("1️⃣ Téléversez un fichier audio")
+st.write("""
+    Bienvenue dans notre outil d'analyse audio. Téléversez un fichier au format MP3 ou WAV pour le 
+    nettoyer et analyser sa qualité sonore.
+""")
+uploaded_file = st.file_uploader("Choisissez un fichier audio :", type=["mp3", "wav"])
 
 if uploaded_file:
-    with st.spinner("Processing your audio file..."):
-        # Sauvegarde temporaire
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_input:
-            temp_input.write(uploaded_file.read())
-            input_audio_path = temp_input.name
-        
-        # Chemin temporaire pour le fichier nettoyé
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_output:
-            output_audio_path = temp_output.name
+    st.info("🎤 Fichier audio téléversé avec succès !")
 
-    st.write("2️⃣ **Cleaning Audio with Demucs**")
-    with st.spinner("Cleaning audio..."):
+    # Save the uploaded file temporarily for processing
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_input:
+        temp_input.write(uploaded_file.read())
+        input_audio_path = temp_input.name
+
+    # Save cleaned audio to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_output:
+        output_audio_path = temp_output.name
+
+    # Step 2: Clean the audio using the AudioProcessor
+    st.subheader("2️⃣ Nettoyage de l'audio")
+    st.write("""
+        Nous utilisons des technologies avancées pour isoler la voix et réduire les bruits de fond. 
+        Cela peut prendre quelques instants.
+    """)
+    with st.spinner("Nettoyage de l'audio en cours..."):
         original_signal, cleaned_signal, sample_rate = processor.clean_audio(
             input_audio_path, output_audio_path, config.LOW_CUTOFF, config.HIGH_CUTOFF
         )
-    st.success("Audio cleaned successfully!")
+    st.success("✅ Nettoyage terminé avec succès !")
 
-    # Lecture audio
+    # Step 3: Audio playback
+    st.subheader("3️⃣ Écoutez et comparez")
     col1, col2 = st.columns(2)
     with col1:
-        st.write("Original Audio")
+        st.write("🔊 Audio original")
         st.audio(uploaded_file, format="audio/mp3")
     with col2:
-        st.write("Cleaned Audio")
+        st.write("🎧 Audio nettoyé")
         st.audio(output_audio_path, format="audio/wav")
 
-    # Visualisation des signaux
-    st.write("#### Signal Comparison")
-    fig, ax = plt.subplots()
-    ax.plot(original_signal[0], label="Original Signal", color='blue', alpha=0.5)
-    ax.plot(cleaned_signal[0], label="Cleaned Signal", color='orange', alpha=0.7)
-    ax.set_title("Original vs Cleaned Audio Signal")
-    ax.set_xlabel("Time (samples)")
+    # Step 4: Waveform visualization
+    st.subheader("4️⃣ Visualisation des formes d'onde")
+    st.write("""
+        La forme d'onde montre les variations du son au fil du temps. Elle vous permet de visualiser
+        la différence entre l'audio original et l'audio nettoyé.
+    """)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(original_signal[0], label="Signal original", color='blue', alpha=0.5)
+    ax.plot(cleaned_signal[0], label="Signal nettoyé", color='orange', alpha=0.7)
+    ax.set_title("Comparaison : Signal original vs Signal nettoyé")
+    ax.set_xlabel("Temps (échantillons)")
     ax.set_ylabel("Amplitude")
     ax.legend()
     st.pyplot(fig)
 
-    # Téléchargement du fichier nettoyé
+    # Step 5: Download the cleaned audio
+    st.subheader("5️⃣ Téléchargez l'audio nettoyé")
     with open(output_audio_path, "rb") as f:
         st.download_button(
-            label="Download Cleaned Audio",
+            label="📥 Télécharger l'audio nettoyé",
             data=f,
-            file_name="cleaned_audio.wav",
+            file_name="audio_nettoye.wav",
             mime="audio/wav",
         )
 else:
-    st.info("Upload an audio file to start.")
+    # Display a message if no file is uploaded
+    st.info("Veuillez téléverser un fichier audio pour commencer.")
+
+# Footer with credits and branding
+st.markdown(
+    """
+    ---
+    **Développé par HeticSolutions pour Hetic Radio** 🎙️
+    """
+)
