@@ -6,3 +6,5 @@ scipy
 demucs
 tempfile
 streamlit
+torchvision
+torchaudio 
